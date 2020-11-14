@@ -26,14 +26,21 @@ class SearchBar extends StatelessWidget {
   Widget buildSearchbar(BuildContext context) {
 
     final width = MediaQuery.of(context).size.width;
+
     return SafeArea(
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 30),
         width: width,
         child: GestureDetector(
           onTap: () async {
-            print('Buscando......');
-            final resultado = await showSearch(context: context, delegate: SearchDestination() );
+            
+            final proximidad = BlocProvider.of<MiUbicacionBloc>(context).state.ubicacion;
+            final historial  = BlocProvider.of<BusquedaBloc>(context).state.historial;
+
+            final resultado = await showSearch(
+              context: context, 
+              delegate: SearchDestination(proximidad, historial) 
+            );
             this.retornoBusqueda(context, resultado);
           },
           child: Container(
@@ -57,7 +64,7 @@ class SearchBar extends StatelessWidget {
     );
   }
 
-  void retornoBusqueda( BuildContext context, SearchResult result ) {
+  Future retornoBusqueda( BuildContext context, SearchResult result ) async {
 
     if (result.cancelo) return;
 
@@ -65,6 +72,34 @@ class SearchBar extends StatelessWidget {
       BlocProvider.of<BusquedaBloc>(context).add(OnActivarMarcadorManual());
       return;
     }
+
+    calculandoAlerta(context);
+
+    // Calcular la ruta en base al valor: result
+    final trafficService = new TrafficService();
+    final mapaBloc = BlocProvider.of<MapaBloc>(context);
+
+    final inicio = BlocProvider.of<MiUbicacionBloc>(context).state.ubicacion;
+    final destino = result.position;
+
+    final drivingResponse = await trafficService.getCoordsInicioYDestino(inicio, destino);
+
+    final geometry = drivingResponse.routes[0].geometry;
+    final duracion = drivingResponse.routes[0].duration;
+    final distancia = drivingResponse.routes[0].distance;
+
+    final points = Poly.Polyline.Decode(encodedString: geometry, precision: 6);
+    final List<LatLng> rutaCoordenadas = points.decodedCoords.map(
+      (point) => LatLng(point[0], point[1])
+    ).toList();
+
+    mapaBloc.add(OnCrearRutaInicioDestino(rutaCoordenadas, distancia, duracion));
+
+    Navigator.of(context).pop();
+
+    // Agregar al Historial
+    final busquedaBloc = BlocProvider.of<BusquedaBloc>(context);
+    busquedaBloc.add(OnAgregarHistorial(result));
 
   }
 }
