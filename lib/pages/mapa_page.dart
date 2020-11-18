@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+//import 'package:mapa_app/bloc/busqueda/busqueda_bloc.dart';
 
 import 'package:mapa_app/bloc/mapa/mapa_bloc.dart';
 import 'package:mapa_app/bloc/mi_ubicacion/mi_ubicacion_bloc.dart';
@@ -75,6 +76,18 @@ class _MapaPageState extends State<MapaPage> {
 
     mapaBloc.add(OnNuevaUbicacion(state.ubicacion));
 
+    //print('NUEVA UBICAION >> $state.ubicacion' );
+    // Agregar al Historial
+    // final proximidad = BlocProvider.of<MiUbicacionBloc>(context).state.ubicacion;
+    // final historial  = BlocProvider.of<BusquedaBloc>(context).state.historial;
+
+    // final resultado = await showSearch(
+    //   context: context, 
+    //   delegate: SearchDestination(proximidad, historial) 
+    // );
+    // final busquedaBloc = BlocProvider.of<BusquedaBloc>(context);
+    // busquedaBloc.add(OnAgregarHistorial(resultado));
+
     //return Text('${ state.ubicacion.latitude }, ${ state.ubicacion.longitude }');
     final cameraPosition = new CameraPosition(
       target: state.ubicacion,
@@ -91,6 +104,7 @@ class _MapaPageState extends State<MapaPage> {
           zoomControlsEnabled: false,
           onMapCreated:  mapaBloc.initMapa,
           polylines: mapaBloc.state.polylines.values.toSet(),
+          markers: mapaBloc.state.markers.values.toSet(),
           onCameraMove: (cameraPosition) {
             // cameraPosition.target = LatLng central del mapa
             mapaBloc.add(OnMovioMapa(cameraPosition.target));

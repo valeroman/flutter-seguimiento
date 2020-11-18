@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
 import 'package:mapa_app/helpers/debouncer.dart';
+import 'package:mapa_app/models/reverse_query_response.dart';
 import 'package:mapa_app/models/search_response.dart';
 import 'package:mapa_app/models/traffic_response.dart';
 
@@ -24,7 +25,7 @@ class TrafficService {
 
   final _baseUrlDir = 'https://api.mapbox.com/directions/v5';
   final _baseUrlGeo = 'https://api.mapbox.com/geocoding/v5';
-  final _apiKey = 'pk.eyJ1IjoidmFsZXJvbWFuIiwiYSI6ImNraGY2ZXh1aTBwOWMyeHBqY3hua2o1NnEifQ.VTk0JMBFpf1poVRNHZwRuA';
+  final _apiKey = '';
 
 
   Future<DrivingResponse> getCoordsInicioYDestino( LatLng inicio, LatLng destino ) async {
@@ -87,4 +88,24 @@ class TrafficService {
   Future.delayed(Duration(milliseconds: 201)).then((_) => timer.cancel()); 
 
 }
+
+  Future<ReverseQueryResponse> getCoordenadasInfo( LatLng destinoCoords) async {
+
+    final url = '${ this._baseUrlGeo }/mapbox.places/${ destinoCoords.longitude }, ${ destinoCoords.latitude }.json';
+
+    final resp = await this._dio.get(url, queryParameters: {
+      'access_token': this._apiKey,
+      'language': 'es',
+    });
+
+    final data = reverseQueryResponseFromJson(resp.data);
+
+    return data;
+
+  }
+
+
+
 }
+
+

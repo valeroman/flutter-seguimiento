@@ -93,12 +93,20 @@ class _BuildMarcadorManual extends StatelessWidget {
 
     final inicio = BlocProvider.of<MiUbicacionBloc>(context).state.ubicacion;
     final destino = mapaBloc.state.ubicacionCentral;
+    
+
+    // Obtener informacion del destino
+
+
+    final reverseQueryResponse = await trafficService.getCoordenadasInfo(destino);
 
     final trafficResponse = await trafficService.getCoordsInicioYDestino(inicio, destino);
 
     final geometry = trafficResponse.routes[0].geometry;
     final duracion = trafficResponse.routes[0].duration;
     final distancia = trafficResponse.routes[0].distance;
+    final nombreDestino = reverseQueryResponse.features[0].text;
+    final descripcionDestino = reverseQueryResponse.features[0].placeNameEs;
 
 
     // Decodificar los puntos del geometry
@@ -107,10 +115,26 @@ class _BuildMarcadorManual extends StatelessWidget {
       (point) => LatLng(point[0], point[1])
       ).toList();
 
-    mapaBloc.add(OnCrearRutaInicioDestino(rutaCoordenadas, distancia, duracion));
+    mapaBloc.add(OnCrearRutaInicioDestino(rutaCoordenadas, distancia, duracion, nombreDestino));
 
     Navigator.of(context).pop();
     BlocProvider.of<BusquedaBloc>(context).add(OnDesactivarMarcadorManual());
+
+    print('Destino==> $nombreDestino');
+    print('Destino_lat==> $destino');
+
+    // Agregar al Historial
+
+    final busquedaBloc = BlocProvider.of<BusquedaBloc>(context);
+    busquedaBloc.add(OnAgregarHistorial(
+      SearchResult(
+        cancelo: false,
+        manual: false,
+        position: LatLng(destino.longitude, destino.latitude ),
+        nombreDestino: nombreDestino,
+        descripcion: descripcionDestino
+      )
+    ));
 
   }
 }
